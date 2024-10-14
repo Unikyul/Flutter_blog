@@ -7,6 +7,7 @@ String formatDate(String date) {
   return DateFormat("yyyy-MM-dd").format(dt);
 }
 
+//navigatorkey는 앱에 떠있는 페이지를 추적할 수 있게 해준다.
 final navigatorKey = GlobalKey<NavigatorState>();
 
 final dio = Dio(

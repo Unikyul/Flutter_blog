@@ -1,11 +1,46 @@
+import 'package:blog/core/utils.dart';
 import 'package:blog/data/post_repository.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 //list_vm은 Service라고 생각하면 된다.
 //-------------------------------------------------
 //1. 창고
 class PostLiveVM extends StateNotifier<PostListModel?> {
+  // ! 넣어야 하는 이유는 화면(화면을 무조건 띄운다)이 없을수 없어서 붙인다.
+  final mContext = navigatorKey.currentState!.context;
+
   PostLiveVM(super.state);
+
+  //삭제 불러오기
+  Future<void> notifyDelete(int id) async {
+    await PostRepository().deleteById(id);
+    PostListModel model = state!;
+    //where은 필터다! 검색로직(이걸 넣으면 e.id == id)
+    List<_Post> newPosts = model.posts.where((e) => e.id != id).toList();
+    state = PostListModel(newPosts);
+    Navigator.pop(mContext);
+  }
+
+//트랙젝션(일의 최소 단위) 통신해서 파싱하고 데이터 화면에 뿌리기(벨리게이트)
+  Future<void> notifySave(String title, String content) async {
+    //통신으로 세이브 요청(글쓰기가 완성)
+    //상태만 변경하면  await PostRepository().save(title, content); 이렇게 쓰면 된다.
+    Map<String, dynamic> one = await PostRepository().save(title, content);
+    //Map타입으로 받음
+    _Post newPost = _Post.fromMap(one);
+    PostListModel model = state!;
+
+    //model.posts.add(newPost);
+
+    //깊은 복사, _Post newPost = _Post.fromMap(one); 이거 만들고 나서 앞에 newPost 붙인다.
+    List<_Post> newPosts = [newPost, ...model.posts];
+
+    // 중요함!!!!!!  상태는 새로 객체를 만들어서 줘야한다.
+    state = PostListModel(newPosts);
+
+    Navigator.pop(mContext);
+  }
 
   //view는 리턴을 해줄필요가없다.
   //Future쓰는 이유는 awiat 사용할려고
